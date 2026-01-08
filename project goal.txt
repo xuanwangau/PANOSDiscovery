@@ -1,0 +1,21 @@
+Project Goal:
+An alternative rule matching tool of PANOS 'Test Policy Match'
+An alternative object lookup tool of PANOS 'Global Find'
+
+PANOS 'Test Policy Match' limitations:
+1. must provide exlicit host IP of source and destination, i.e. can't use subnet
+2. must provide Destination port in case of UDP and TCP
+3. must select one of 3 protocols - TCP/UDP/ICMP
+4. either include single matching rule only, or does not display consequent potentially matching rule after first match
+
+PANOS 'Global Find' limitations:
+1. exact match of address object, not suitable to find shadowing objects, i.e. find the subnet (or range) object which covers a particular ip address
+2. lack of house keeping capability, such like list redundant object and unused object
+
+Typical tasks this project aims to solve:
+1. given a source/destination IP address or a subnet, list all the potentially matching rules, regardless other conditions such like port and applications.
+2. find duplicate address object
+3. find unused object
+
+Note: The task list of this project may extend. The development of coding may take several stages and focus on one function at a time
+
