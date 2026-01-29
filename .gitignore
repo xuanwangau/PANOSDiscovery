@@ -1,3 +1,7 @@
 # ignore project planning
 
 project goal.txt
+
+# ignore inventory folder
+
+/inv/
