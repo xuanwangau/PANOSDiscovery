@@ -2,6 +2,8 @@
 
 project goal.txt
 
-# ignore inventory folder
+# do not push private data
 
 /inv/
+/report/
+
