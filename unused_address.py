@@ -108,7 +108,7 @@ def ensure_list(data):
 
 addr_result = addr_raw.get('response').get('result') or {} # return empty dict if no address configured
 if addr_result:
-    all_addrs = ensure_list(addr_result.get('address').get('entry'))
+    all_addrs = ensure_list(addr_result.get('address').get('entry'))   
     defined_addr_names = {item['@name'] for item in all_addrs} # Set of all address names
     print(f"Found {len(defined_addr_names)} address objects.")
 else:
