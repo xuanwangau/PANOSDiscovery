@@ -3,6 +3,7 @@ import xmltodict
 import urllib3
 import getpass
 import sys
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -112,7 +113,7 @@ if addr_result:
     defined_addr_names = {item['@name'] for item in all_addrs} # Set of all address names
     print(f"Found {len(defined_addr_names)} address objects.")
 else:
-    all_addr = []
+    all_addrs = []
     defined_addr_names = set()
     print('No address object configured!')
     sys.exit()
@@ -131,17 +132,31 @@ else:
 
 # structure group map: {'group_name':['member 1', 'member 2']}
 
+# function to split multiple tags in dynamic group definition
+
+def split_filter(text):
+    pattern = r"\s+or\s+"
+    result = re.split(pattern, text)
+    new_result = []
+    for tag in result:
+        new_result.append(tag.strip("' "))
+    return new_result
+
 group_map={}
+group_filters = set()
 
 if all_groups:    
     for group in all_groups:
         # handles static group type only, if dynamic, members = []
-        if group.get('dynamic'):
-            members = []
-        else:
+        if group.get('static'):
             members = ensure_list(group.get('static').get('member'))
-
+        else: # must be dynamic group
+            filters = split_filter(group.get('dynamic').get('filter'))
+            for tag in filters:
+                group_filters.update([tag])
+                
         group_map[group['@name']] = members
+
 
 
 # ================================================================================================
@@ -171,20 +186,20 @@ else:
 
 
 # ===============================================================================================
-# =========== Identify used objects in rules ====================================================
+# =========== Identify used objects in configuration ====================================================
 
 print("Processing object usages...")
 
 used_references = set()
 
-# process security rules source and destination
+# identify objects in security rules source and destination
 
 if all_rulesec:
     for rule in all_rulesec:
         used_references.update(ensure_list(rule.get('source').get('member')))
         used_references.update(ensure_list(rule.get('destination').get('member')))
 
-# process nat rules source and destination, source-translation, destination-translation
+# identify objects in nat rules source and destination, source-translation, destination-translation
 
 if all_rulenat:
     for rule in all_rulenat:
@@ -207,6 +222,15 @@ if all_rulenat:
         except KeyError:
             print(f"Error parsing NAT rule {rule['@name']}")
             continue
+
+# identify address objects referenced in dynamic groups
+
+for address in all_addrs:
+    if address.get('tag'):
+        addr_tags = ensure_list(address.get('tag').get('member'))
+        for tag in addr_tags:
+            if tag in group_filters:                
+                used_references.update(ensure_list(address.get('@name')))
 
 
 # =============================================================================================
