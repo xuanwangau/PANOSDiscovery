@@ -205,23 +205,19 @@ if all_rulenat:
     for rule in all_rulenat:
         used_references.update(ensure_list(rule.get('source').get('member')))
         used_references.update(ensure_list(rule.get('destination').get('member')))
-        try:
-            if rule.get('destination-translation'):
-                used_references.update(ensure_list(rule.get('destination-translation').get('translated-address'))) 
+        
+        if rule.get('destination-translation'):
+            used_references.update(ensure_list(rule.get('destination-translation').get('translated-address'))) 
 
-            if rule.get('source-translation'):
-                src_trans = rule.get('source-translation')
+        if rule.get('source-translation'):
+            src_trans = rule.get('source-translation')
+            for key, value in src_trans.items():
                 if src_trans.get('static-ip'):
                     used_references.update(ensure_list(src_trans.get('static-ip').get('translated-address')))
                 else:
-                    for key in src_trans.keys():
-                        if src_trans[key].get('translated-address'):
-                            used_references.update(ensure_list(src_trans[key].get('translated-address').get('member')))
-                            
-
-        except KeyError:
-            print(f"Error parsing NAT rule {rule['@name']}")
-            continue
+                    for key, value in src_trans.items():
+                        if isinstance(value, dict) and value.get('translated-address'):
+                            used_references.update(ensure_list(value.get('translated-address',{}).get('member')))         
 
 # identify address objects referenced in dynamic groups
 
