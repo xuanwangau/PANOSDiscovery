@@ -94,19 +94,21 @@ rulenat_raw =   xmltodict.parse(get_config(fw_ip, rulenat_xpath, api_key))
 # ==============================================================================================
 # ======== format address and group dictionary =================================================
 
-# function to format objects: if multiple, return list of dict, if single return list is singel instance
+# function to format xmltodict objects: if None, return empty list, 
+# if single value, wrap in list, if multiple, return list of dict as is
 
-def normalize_obj(result, type):
-    if isinstance(result.get(type).get('entry'), list):
-        return result.get(type).get('entry')
-    else:
-        return [result.get(type).get('entry')]
+def ensure_list(data):
+    if data is None:
+        return []
+    if isinstance(data, list):
+        return data
+    return [data]
 
 # get all address objects
 
 addr_result = addr_raw.get('response').get('result') or {} # return empty dict if no address configured
 if addr_result:
-    all_addrs = normalize_obj(addr_result, 'address')
+    all_addrs = ensure_list(addr_result.get('address').get('entry'))
     defined_addr_names = {item['@name'] for item in all_addrs} # Set of all address names
     print(f"Found {len(defined_addr_names)} address objects.")
 else:
@@ -119,7 +121,7 @@ else:
 
 group_result = group_raw.get('response').get('result') or {} # return empty dict if no address-group configured
 if group_result:
-    all_groups = normalize_obj(group_result, 'address-group')
+    all_groups = ensure_list(group_result.get('address-group').get('entry'))
     defined_group_names = { item['@name'] for item in all_groups} # set of all group names
     print(f"Found {len(defined_group_names)} address groups.")
 else:
@@ -129,14 +131,6 @@ else:
 
 # structure group map: {'group_name':['member 1', 'member 2']}
 
-# function to format members
-
-def normalize_member(instance, key):
-    if isinstance(instance.get(key).get('member'), list):
-        return instance.get(key).get('member')
-    else:
-        return [instance.get(key).get('member')]
-
 group_map={}
 
 if all_groups:    
@@ -145,7 +139,7 @@ if all_groups:
         if group.get('dynamic'):
             members = []
         else:
-            members = normalize_member(group, 'static')
+            members = ensure_list(group.get('static').get('member'))
 
         group_map[group['@name']] = members
 
@@ -155,19 +149,11 @@ if all_groups:
 
 print('Retrieving configured rules...')
 
-# function to format types of ruleset
-
-def normalize_rule(result, rule_type):
-    if isinstance(result.get(rule_type).get('rules').get('entry'), list):
-        return result.get(rule_type).get('rules').get('entry')
-    else:
-        return [result.get(rule_type).get('rules').get('entry')]
-
 # get security rules
 
 rulesec_result = rulesec_raw.get('response').get('result') or {} # return {} if no security rule defined
 if rulesec_result:
-    all_rulesec = normalize_rule(rulesec_result, 'security')
+    all_rulesec = ensure_list(rulesec_result.get('security').get('rules').get('entry'))
     print(f"Found {len(all_rulesec)} security rules.")
 else:
     all_rulesec = []
@@ -177,7 +163,7 @@ else:
 
 rulenat_result = rulenat_raw.get('response').get('result') or {} # return {} if no nat rule defined
 if rulenat_result:
-    all_rulenat = normalize_rule(rulenat_result, 'nat')
+    all_rulenat = ensure_list(rulenat_result.get('nat').get('rules').get('entry'))
     print(f"Found {len(all_rulenat)} NAT rules.")
 else:
     all_rulenat = []
@@ -195,35 +181,27 @@ used_references = set()
 
 if all_rulesec:
     for rule in all_rulesec:
-        used_references.update(normalize_member(rule, 'source'))
-        used_references.update(normalize_member(rule, 'destination'))
+        used_references.update(ensure_list(rule.get('source').get('member')))
+        used_references.update(ensure_list(rule.get('destination').get('member')))
 
-# function to format translated-address in nat rules
-
-def normalize_trans_addr(instance, type):
-    if isinstance(instance.get(type).get('translated-address'), list):
-        return instance.get(type).get('translated-address')
-    else:
-        return [instance.get(type).get('translated-address')]
-    
 # process nat rules source and destination, source-translation, destination-translation
 
 if all_rulenat:
     for rule in all_rulenat:
-        used_references.update(normalize_member(rule, 'source'))
-        used_references.update(normalize_member(rule, 'destination'))
+        used_references.update(ensure_list(rule.get('source').get('member')))
+        used_references.update(ensure_list(rule.get('destination').get('member')))
         try:
             if rule.get('destination-translation'):
-                used_references.update(normalize_trans_addr(rule, 'destination-translation')) 
+                used_references.update(ensure_list(rule.get('destination-translation').get('translated-address'))) 
 
             if rule.get('source-translation'):
                 src_trans = rule.get('source-translation')
                 if src_trans.get('static-ip'):
-                    used_references.update(normalize_trans_addr(src_trans, 'static-ip'))
+                    used_references.update(ensure_list(src_trans.get('static-ip').get('translated-address')))
                 else:
                     for key in src_trans.keys():
                         if src_trans[key].get('translated-address'):
-                            used_references.update(normalize_member(src_trans[key], 'translated-address'))
+                            used_references.update(ensure_list(src_trans[key].get('translated-address').get('member')))
                             
 
         except KeyError:
