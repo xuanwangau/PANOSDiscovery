@@ -7,3 +7,9 @@ project goal.txt
 /inv/
 /report/
 
+# ignore unused code
+
+ssh_Paloalto.py
+
+
+
