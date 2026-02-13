@@ -116,14 +116,13 @@ def pa_report(ip, sysname, unused_groups, unused_addresses): # generate report
 
     # prepare a file to save report
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
+    
+    p=Path('report')
+    if not p.is_dir():
+        p.mkdir()
 
-    folder='report'
-    p=Path(folder)
-    if p.is_dir():
-        output_file=Path(fr".\report\PANOS_{ip}_{sysname}_report_{timestamp}.txt")
-    else:
-        Path(folder).mkdir()
-        output_file=Path(fr".\report\PANOS_{ip}_{sysname}_report_{timestamp}.txt")
+    filename = f"PANOS_{ip}_{sysname}_report_{timestamp}.txt"
+    output_file = p / filename
 
     # write result to file
     with open(output_file, mode='w', encoding='utf-8') as f:

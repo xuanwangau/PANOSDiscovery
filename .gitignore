@@ -11,5 +11,8 @@ project.txt
 
 __pycache__/
 
+# ignore VS Code settings
+
+.vscode/
 
 

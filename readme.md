@@ -5,6 +5,9 @@ This tool identifies unused address objects and address groups within Palo Alto 
 
 The script dynamically adapts its analysis based on whether it is connected to a standalone Next-Generation Firewall (NGFW) or a Panorama management server.
 
+[SECURITY NOTE]
+This script disables SSL verification and should be used within a trusted management network only.
+
 Key Features
 - Model Awareness: Support both standalone firewall and Panorama management server.
 
