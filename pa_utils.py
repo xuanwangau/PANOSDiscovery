@@ -143,4 +143,4 @@ def pa_report(ip, sysname, unused_groups, unused_addresses): # generate report
         f.write(f"\n----End of Report----\n")
 
     print(fr"Found {len(unused_groups)} unused groups and {len(unused_addresses)} unused address objects in {sysname}.")
-    print(fr"Report saved in \{output_file}")
+    print(fr"Report saved in {output_file}")
