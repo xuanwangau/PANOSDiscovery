@@ -1,9 +1,11 @@
 PAN-OS Configuration Cleanup Tool (pacleanup)
 
 Use Case
-This tool identifies unused address objects and address groups within Palo Alto Networks environments. It is designed to assist administrators in maintaining a "lean" configuration by cross-referencing defined objects against their actual usage in security and NAT policies.
+- This tool identifies unused address objects and address groups within Palo Alto Networks environments. It is designed to assist administrators in maintaining a "lean" configuration by cross-referencing defined objects against their actual usage in security and NAT policies.
 
-The script dynamically adapts its analysis based on whether it is connected to a standalone Next-Generation Firewall (NGFW) or a Panorama management server.
+- The script dynamically adapts its analysis based on whether it is connected to a standalone Next-Generation Firewall (NGFW) or a Panorama management server.
+
+- This script is designed for read-only analysis of Palo Alto Networks NGFW or Panorama configurations.
 
 [SECURITY NOTE]
 This script disables SSL verification and should be used within a trusted management network only.
