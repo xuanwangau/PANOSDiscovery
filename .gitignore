@@ -4,13 +4,13 @@ project.txt
 
 # do not push private data
 
-/inv/
-/report/
+/inv
+/report
 
 # ignore unused code
 
 ssh_Paloalto.py
-/_pycache_/
+_pycache_/
 
 
 
