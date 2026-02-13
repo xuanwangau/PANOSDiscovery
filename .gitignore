@@ -10,7 +10,7 @@ project.txt
 # ignore unused code
 
 ssh_Paloalto.py
-_pycache_/
+__pycache__/
 
 
 
