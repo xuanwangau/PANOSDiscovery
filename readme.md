@@ -1,50 +1,44 @@
-Unused Address Object Finder (PAN-OS Local Version)
+PAN-OS Configuration Cleanup Tool (pacleanup)
 
+Use Case
+This tool identifies unused address objects and address groups within Palo Alto Networks environments. It is designed to assist administrators in maintaining a "lean" configuration by cross-referencing defined objects against their actual usage in security and NAT policies.
 
-Description / Use Case
+The script dynamically adapts its analysis based on whether it is connected to a standalone Next-Generation Firewall (NGFW) or a Panorama management server.
 
-This script is designed to identify unused address objects and address groups on a Palo Alto Networks firewall. It does not make any configuration change such like deleting obsolete address objects.
+Key Features
+- Model Awareness: Support both standalone firewall and Panorama management server.
 
+- Panorama Support: Inspects both Shared and Device-Group objects, and pre-rulebase and post-rulebase policies.
 
-The script performs the following:
+- Multi-VSYS Iteration: For standalone firewalls, analyze all available Virtual Systems (VSYS) and generates individual reports for each.
 
-Generates a dynamic API key using provided credentials.
+- Recursive Group Flattening: Includes a recursive engine to "drill down" through nested address groups, ensuring that base address objects are only marked as unused if they do not appear in any parent group currently in use.
 
-Retrieves all defined address objects and groups from the firewall.
-
-Identifies which objects are referenced in rules.
-
-Recursively "flattens" groups to ensure objects nested within groups are correctly identified as "in use". Note an object in an 'unused' group is considered as used, since it is referenced by an group.
-
-Exports a timestamped text report listing all unused groups and address objects.
-
+- Dynamic Group Resolution: Uses operational API commands to fetch the real-time member list of Dynamic Address Groups.
 
 Prerequisites
+The tool requires the following Python modules:
 
-The following Python modules are required to run the script:
+- requests: For API communication.
 
-requests: For sending HTTPS API calls to the firewall.
+- xmltodict: For converting XML responses into Python dictionaries.
 
-xmltodict: For converting XML API responses into navigable Python dictionaries.
+- urllib3: For managing SSL certificate warnings.
 
-urllib3: Used to manage SSL certificate warning suppression.
-
+- pathlib & datetime: For report file management and timestamping.
 
 Limitations
+- Policy Scope: The analysis is strictly limited to Security and NAT rulebases. Usage in other sections—such as Decryption, PBF, Tunnel interfaces, or Policy Objects (like User-ID)—is not currently inspected.
 
-Scope of Analysis: The script currently only inspects the Security and NAT rulebases. Objects used exclusively in other areas (e.g., Decryption, PBF, or Tunnel interfaces) may be incorrectly reported as unused.
+- Read-Only: This tool only identifies and reports unused objects; it does not perform any deletion or modification of the configuration.
 
-VSYS Support: The script is hardcoded to support a single vsys named vsys1.
-
-Static vs. Dynamic: While the script handles static groups and parses tags for dynamic groups, it does not currently account for objects used in dynamic address groups based on criteria other than tags.
-
+- Network Access: Requires HTTPS access to the management interface of the target device and valid administrative credentials.
 
 Usage
+1. Ensure all script modules (pa_utils.py, parse_fw.py, and parse_pano.py) are in the same directory as pacleanup.py.
 
-Ensure the requests and xmltodict modules are installed via pip.
+2. Run the orchestrator script: python pacleanup.py.
 
-Run the script: python unused_address.py.
+3. Enter the device IP and credentials when prompted.
 
-Enter the Management IP, Username, and Password when prompted.
-
-The final report will be saved in the \report directory relative to the script location.
+4. Reports are automatically saved as .txt files in a local \report folder.
