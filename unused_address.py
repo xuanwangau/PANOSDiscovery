@@ -147,7 +147,7 @@ group_filters = set()
 
 if all_groups:    
     for group in all_groups:
-        # handles static group type only, if dynamic, members = []
+        
         if group.get('static'):
             members = ensure_list(group.get('static').get('member'))
         else: # must be dynamic group
@@ -183,6 +183,7 @@ if rulenat_result:
 else:
     all_rulenat = []
     print("No NAT rule configured!")
+
 
 
 # ===============================================================================================
@@ -229,6 +230,7 @@ for address in all_addrs:
                 used_references.update(ensure_list(address.get('@name')))
 
 
+
 # =============================================================================================
 # ============ Recursive group to address flattening =============================================
 
@@ -252,6 +254,7 @@ def expand_usage(obj_name):
 
 for item in used_references:
     expand_usage(item)
+
 
 
 # ==============================================================================================
