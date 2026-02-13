@@ -7,9 +7,8 @@ project.txt
 /inv
 /report
 
-# ignore unused code
+# ignore cache
 
-ssh_Paloalto.py
 __pycache__/
 
 

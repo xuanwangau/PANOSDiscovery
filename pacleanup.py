@@ -67,10 +67,11 @@ if sys_info.get('model').lower() == 'panorama':
         'key':api_key
     }
 
-    dg_root_raw = pa_utils.parse_request(dev_ip, dg_params)
+    dg_root_response = pa_utils.parse_request(dev_ip, dg_params)
+    dg_root_raw = dg_root_response.get('response',{}).get('result')
 
-    if dg_root_raw.get('response').get('result'):
-        dg_root = pa_utils.ensure_list(dg_root_raw.get('response').get('result').get('device-group').get('entry'))
+    if dg_root_raw:
+        dg_root = pa_utils.ensure_list(dg_root_raw.get('device-group').get('entry'))
     else:
         print(f"No device group found on {dev_ip}.")
         dg_root=[]
@@ -83,10 +84,11 @@ if sys_info.get('model').lower() == 'panorama':
         'key':api_key
     }
 
-    shared_root_raw = pa_utils.parse_request(dev_ip, shared_params)
+    shared_root_response = pa_utils.parse_request(dev_ip, shared_params)
+    shared_root_raw = shared_root_response.get('response',{}).get('result')
 
-    if shared_root_raw.get('response').get('result'):
-        shared_root = shared_root_raw.get('response').get('result').get('shared')
+    if shared_root_raw:
+        shared_root = shared_root_raw.get('shared')
     else:
         print(f"No shared object found on {dev_ip}.")
         shared_root = {}
@@ -130,8 +132,7 @@ else: # system is NGFW, get vsys config from firewall
         vsys_root = pa_utils.ensure_list(vsys_root_raw.get('response').get('result').get('vsys').get('entry'))
  
         for vsys_ins in vsys_root:
-            vsys_name = vsys_ins.get('@name')
-            print(f"Processing {vsys_name}...")
+            vsys_name = vsys_ins.get('@name')            
 
             # call parse_fw module
             defined_addr_names, defined_group_names, group_map, used_references = parse_fw.parse(dev_ip, vsys_ins, api_key)
@@ -148,7 +149,7 @@ else: # system is NGFW, get vsys config from firewall
             unused_groups = defined_group_names - processed_groups
             unused_addresses = defined_addr_names - final_used_addresses
 
-            pa_utils.pa_report(dev_ip, vsys_name, unused_groups, unused_addresses)
+            pa_utils.pa_report(dev_ip, 'firewall '+ vsys_name, unused_groups, unused_addresses)
 
 
     else:

@@ -22,8 +22,8 @@ def get_api_key(ip, user, pw): # generate API key
         parsed = xmltodict.parse(response.text)
         return parsed['response']['result']['key']
     
-    except:
-        print(f"Failed generating API key on {ip}. Check login details.")
+    except Exception as e:
+        print(f"Error generating API key on {ip}: {e}")
         sys.exit()
 
 
@@ -55,7 +55,7 @@ def get_dyn_group (ip, grp_name, api_key): # get dynamic group members
         return parsed['response']['result']
     
     except Exception as e:
-        print(f"Error get group {grp_name} - Ignore group members")
+        print(f"Error get group {grp_name}, members ignored: {e}")
         return {}
 
 
@@ -71,36 +71,30 @@ def gen_obj(type, root): # generate address/group set
 
     if root.get(type,{}):
         all_obj = ensure_list(root.get(type).get('entry'))
-        defined_obj_names = {item['@name'] for item in all_obj} # Set of all address/group names
-        print(f"Found {len(defined_obj_names)} {type}.")
+        defined_obj_names = {item['@name'] for item in all_obj} # Set of all address/group names        
     else:
         all_obj = []
-        defined_obj_names = set()
-        print(f'No {type} object configured!')
+        defined_obj_names = set()        
     return all_obj, defined_obj_names
 
 
 def gen_rule_fw(type, root): # generate rule set on NGFW
 
     if root.get('rulebase').get(type):
-        all_rule = ensure_list(root.get('rulebase').get(type).get('rules').get('entry'))
-        print(f"Found {len(all_rule)} {type} rules.")
+        all_rule = ensure_list(root.get('rulebase').get(type).get('rules').get('entry'))        
     else:
         all_rule = []
-        print(f"No {type} rule configured!")
-    
+
     return all_rule
 
 
 def gen_rule_pano(pre_or_post, type, root): # generate rule set on Panorama
 
     if root.get(pre_or_post).get(type,{}).get('rules'):
-        all_rule=ensure_list(root.get(pre_or_post).get(type).get('rules').get('entry'))
-        print(f"Found {len(all_rule)} {type} rules in {pre_or_post}.")
+        all_rule=ensure_list(root.get(pre_or_post).get(type).get('rules').get('entry'))        
     else:
         all_rule=[]
-        print(f"No {type} rule in {pre_or_post} configured!")
-
+        
     return all_rule
 
 
@@ -118,7 +112,7 @@ def expand_usage(obj_name, group_map, processed_groups, final_used_addresses): #
         final_used_addresses.add(obj_name)
 
 
-def pa_report(ip, vsys_name, unused_groups, unused_addresses): # generate report
+def pa_report(ip, sysname, unused_groups, unused_addresses): # generate report
 
     # prepare a file to save report
     timestamp = datetime.now().strftime("%m%d_%H%M%S")
@@ -126,14 +120,14 @@ def pa_report(ip, vsys_name, unused_groups, unused_addresses): # generate report
     folder='report'
     p=Path(folder)
     if p.is_dir():
-        output_file=Path(fr".\report\PA_firewall_{ip}_{vsys_name}_report_{timestamp}.txt")
+        output_file=Path(fr".\report\PANOS_{ip}_{sysname}_report_{timestamp}.txt")
     else:
         Path(folder).mkdir()
-        output_file=Path(fr".\report\PA_firewall_{ip}_{vsys_name}_report_{timestamp}.txt")
+        output_file=Path(fr".\report\PANOS_{ip}_{sysname}_report_{timestamp}.txt")
 
     # write result to file
     with open(output_file, mode='w', encoding='utf-8') as f:
-        f.write(f"Analysis report for {vsys_name} - Generated on: {datetime.now()}\n\n")
+        f.write(f"Analysis report for {ip} {sysname} - Generated on: {datetime.now()}\n\n")
 
         f.write(f"-"*40 + "\n\n")
 
@@ -149,5 +143,5 @@ def pa_report(ip, vsys_name, unused_groups, unused_addresses): # generate report
 
         f.write(f"\n----End of Report----\n")
 
+    print(fr"Found {len(unused_groups)} unused groups and {len(unused_addresses)} unused address objects in {sysname}.")
     print(fr"Report saved in \{output_file}")
-    print(fr"Total {len(unused_groups)} unused groups and {len(unused_addresses)} unused address objects.")
