@@ -102,11 +102,13 @@ if sys_info.get('model').lower() == 'panorama':
             for obj in dg_address:
                 pa_utils.update_reverse_map(reverse_addr_map, obj)
 
+        dup_addr_map ={}
         for key, value in reverse_addr_map.items():
             if len(value)> 1:
-                print (f"Found duplicate objects: value - {key}")
-                for v in value:
-                    print(v)
+                dup_addr_map[key]= reverse_addr_map[key]
+        
+        pa_utils.pa_dup_report(dev_ip, 'Panorama', dup_addr_map)
+                
 
     else:
         print(f"No address object defined on {dev_ip}")
@@ -127,8 +129,8 @@ else: # system is NGFW, get vsys config from firewall
         vsys_root = pa_utils.ensure_list(vsys_root_raw.get('response').get('result').get('vsys').get('entry'))
  
         for vsys_ins in vsys_root:
-
-            print(f"Analyzing firewall {vsys_ins.get('@name')} configuration...")
+            vsys_name = vsys_ins.get('@name')
+            print(f"Analyzing firewall {vsys_name} configuration...")
 
             reverse_addr_map = {}
 
@@ -137,11 +139,12 @@ else: # system is NGFW, get vsys config from firewall
             for obj in vsys_address:
                 pa_utils.update_reverse_map(reverse_addr_map, obj)
 
+            dup_addr_map ={}
             for key, value in reverse_addr_map.items():
                 if len(value)> 1:
-                    print (f"Found duplicate objects: value - {key}")
-                    for v in value:
-                        print(v)
+                    dup_addr_map[key]= reverse_addr_map[key]
+
+            pa_utils.pa_dup_report(dev_ip, 'firewall '+ vsys_name, dup_addr_map)
         
     else:
         print(f"Nothing to clean up on {dev_ip}.")

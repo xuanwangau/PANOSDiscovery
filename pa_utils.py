@@ -156,3 +156,34 @@ def update_reverse_map(map, obj):
                 map[map_key].append(obj.get('@name'))
             else:
                 map[map_key] = [obj.get('@name')]
+
+
+def pa_dup_report(ip, sysname, map):
+    # prepare a file to save report
+    timestamp = datetime.now().strftime("%m%d_%H%M%S")
+    
+    p=Path('report')
+    if not p.is_dir():
+        p.mkdir()
+
+    filename = f"PANOS_{ip}_{sysname}_report_{timestamp}.txt"
+    output_file = p / filename
+
+    # write result to file
+    with open(output_file, mode='w', encoding='utf-8') as f:
+        f.write(f"Analysis report for {ip} {sysname} - Generated on: {datetime.now()}\n\n")
+
+        f.write(f"-"*40 + "\n\n")
+
+        f.write(f"Found {len(map)} duplicated objects...\n")
+
+        for key, value in map.items():
+            f.write (f"\nDuplicate objects: {key}\n")
+            for v in value:
+                f.write(f"Object name: {v}\n")
+
+        f.write(f"\n----End of Report----\n")
+
+    print(f"Found {len(map)} duplicated objects on {ip} {sysname}.")
+    print(f"Report saved in {output_file}")
+        
