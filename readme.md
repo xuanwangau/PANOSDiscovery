@@ -1,7 +1,9 @@
-PAN-OS Configuration Cleanup Tool (pacleanup)
+PAN-OS Configuration Cleanup Tool
+pacleanup.py - find unused address objects and address groups
+pafinddup.py - find address objects which have the same value
 
 Use Case
-- This tool identifies unused address objects and address groups within Palo Alto Networks environments. It is designed to assist administrators in maintaining a "lean" configuration by cross-referencing defined objects against their actual usage in security and NAT policies.
+- These tools are designed to assist Palo Alto firewall/Panorama administrators to look for unused objects and duplicated addresses
 
 - The script dynamically adapts its analysis based on whether it is connected to a standalone Next-Generation Firewall (NGFW) or a Panorama management server.
 
@@ -40,9 +42,9 @@ Limitations
 - Network Access: Requires HTTPS access to the management interface of the target device and valid administrative credentials.
 
 Usage
-1. Ensure all script modules (pa_utils.py, parse_fw.py, and parse_pano.py) are in the same directory as pacleanup.py.
+1. Ensure all script modules are in the same directory.
 
-2. Run the orchestrator script: python pacleanup.py.
+2. Run the orchestrator script: python pacleanup.py to find unused objects, pafinddup.py to find duplicated objects.
 
 3. Enter the device IP and credentials when prompted.
 
