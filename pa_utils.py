@@ -144,3 +144,15 @@ def pa_report(ip, sysname, unused_groups, unused_addresses): # generate report
 
     print(fr"Found {len(unused_groups)} unused groups and {len(unused_addresses)} unused address objects in {sysname}.")
     print(fr"Report saved in {output_file}")
+
+
+def update_reverse_map(map, obj):
+    addr_types = ['ip-netmask', 'ip-range', 'ip-wildcard', 'fqdn']
+    
+    for key, value in obj.items():
+        if key in addr_types:
+            map_key=value.removesuffix('/32')
+            if map_key in map:
+                map[map_key].append(obj.get('@name'))
+            else:
+                map[map_key] = [obj.get('@name')]
