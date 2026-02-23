@@ -5,7 +5,7 @@
 # modules
 import pa_utils
 
-def parse(ip, vsys, api_key):
+def fw_used(ip, vsys, api_key):
 
     # vsys is a dictionary looks like 
     # {'@name': vsys_name, 'rulebase':{'security':{'rules':{'entry':[]}}}, 'address':{'entry':[]}, ...}
@@ -75,3 +75,31 @@ def parse(ip, vsys, api_key):
 
     return defined_addr_names, defined_group_names, group_map, used_references
 
+def fw_map (vsys_root):
+
+    all_address = []
+    all_addr_grp = []
+    all_secrule = []
+
+    for vsys in vsys_root:
+        vsys_name = vsys.get('@name')
+        
+        if vsys.get('address',{}):
+            vsys_address = pa_utils.ensure_list(vsys.get('address').get('entry'))
+            all_address = all_address + vsys_address
+        else:
+            print(f"No address object defind on firewall vsys {vsys_name}.")
+
+        # build address group map
+        if vsys.get('address-group',{}):
+            vsys_addr_grp = pa_utils.ensure_list(vsys.get('address-group').get('entry'))
+            all_addr_grp = all_addr_grp + vsys_addr_grp
+        else:
+            print(f"No address group defined on firewall vsys {vsys_name}.")
+
+        #build security rule map
+        if vsys.get('rulebase',{}).get('security',{}).get('rules'):
+            vsys_secrule = pa_utils.ensure_list(vsys.get('rulebase',{}).get('security',{}).get('rules',{}).get('entry'))
+            all_secrule = all_secrule + vsys_secrule
+
+    return all_address, all_addr_grp, all_secrule

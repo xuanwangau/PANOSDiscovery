@@ -96,7 +96,7 @@ if sys_info.get('model').lower() == 'panorama':
     # if neither dg_root and shared_root is empty, call Panorama module
     
     if dg_root and shared_root:
-        defined_addr_names, defined_group_names, group_map, used_references = parse_pano.parse(dev_ip, dg_root, shared_root, api_key)
+        defined_addr_names, defined_group_names, group_map, used_references = parse_pano.pano_used(dev_ip, dg_root, shared_root, api_key)
     else:
         print(f"No configuration to clean up on {dev_ip}")
         sys.exit()
@@ -135,7 +135,7 @@ else: # system is NGFW, get vsys config from firewall
             vsys_name = vsys_ins.get('@name')            
 
             # call parse_fw module
-            defined_addr_names, defined_group_names, group_map, used_references = parse_fw.parse(dev_ip, vsys_ins, api_key)
+            defined_addr_names, defined_group_names, group_map, used_references = parse_fw.fw_used(dev_ip, vsys_ins, api_key)
             
             # finalize used object and group
             final_used_addresses = set()

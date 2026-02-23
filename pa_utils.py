@@ -3,6 +3,7 @@
 import xmltodict
 import requests
 import sys
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -187,3 +188,24 @@ def pa_dup_report(ip, sysname, map):
     print(f"Found {len(map)} duplicated objects on {ip} {sysname}.")
     print(f"Report saved in {output_file}")
         
+
+def fqdn_cache_to_map(fqdn_text):
+    # 1. Split the text into blocks by looking for the domain names
+    # This assumes domains start at the beginning of a line
+    blocks = re.split(r'\n(?=[a-zA-Z0-9])', fqdn_text.strip())
+
+    data_map = {}
+
+    for block in blocks:
+        lines = block.strip().split('\n')
+        domain = lines[0].strip()
+        
+        # 2. Extract only IPv4 addresses from the rest of the block
+        # Logic: \b boundaries and 4 sets of 1-3 digits
+        ipv4_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+        ips = re.findall(ipv4_pattern, block)
+        
+        data_map[domain] = ips
+
+    return data_map
+

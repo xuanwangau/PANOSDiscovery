@@ -30,7 +30,7 @@ def parse_section_obj (ip, section_root, api_key):
     return section_addr_names, section_group_names, section_group_map
 
 
-def parse (ip, dg_root, shared_root, api_key):
+def pano_used (ip, dg_root, shared_root, api_key):
 
     defined_addr_names = set()
     defined_group_names = set()    
@@ -112,3 +112,4 @@ def parse (ip, dg_root, shared_root, api_key):
                             used_references.update(pa_utils.ensure_list(value.get('translated-address').get('member')))    
 
     return defined_addr_names, defined_group_names, all_group_map, used_references
+

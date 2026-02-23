@@ -34,6 +34,8 @@ The tool requires the following Python modules:
 
 - pathlib & datetime: For report file management and timestamping.
 
+- re: Regular Expression module
+
 Limitations
 - Policy Scope: The analysis is strictly limited to Security and NAT rulebases. Usage in other sections—such as Decryption, PBF, Tunnel interfaces, or Policy Objects (like User-ID)—is not currently inspected.
 
