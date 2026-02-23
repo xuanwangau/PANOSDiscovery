@@ -28,36 +28,34 @@ def get_api_key(ip, user, pw): # generate API key
         sys.exit()
 
 
-def parse_request( ip, params): # send api request and return xmltodict response
+def conf_request(ip, key, xpath):
 
     url = fr"https://{ip}/api/"
-    
+    params ={
+        'type':'config',
+        'action': 'get',
+        'xpath': xpath,
+        'key': key
+    }
+
     response = requests.get(url, params=params, verify=False)
     response.raise_for_status()
     parsed = xmltodict.parse(response.text)
-
     return parsed
 
+def op_request(ip, key, xpath):
 
-def get_dyn_group (ip, grp_name, api_key): # get dynamic group members
-     
     url = fr"https://{ip}/api/"
+    params ={
+        'type':'op',
+        'cmd': xpath,
+        'key': key
+    }
 
-    params = {
-         'type': 'op',
-         'cmd': f"<show><object><dynamic-address-group><name>{grp_name}</name></dynamic-address-group></object></show>",
-         'key': api_key
-     }
-
-    try:
-        response = requests.post(url, params=params, verify=False)
-        response.raise_for_status()
-        parsed = xmltodict.parse(response.text)
-        return parsed['response']['result']
-    
-    except Exception as e:
-        print(f"Error get group {grp_name}, members ignored: {e}")
-        return {}
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status()
+    parsed = xmltodict.parse(response.text)
+    return parsed
 
 
 def ensure_list(data): # ensure data is list type
@@ -113,7 +111,7 @@ def expand_usage(obj_name, group_map, processed_groups, final_used_addresses): #
         final_used_addresses.add(obj_name)
 
 
-def pa_report(ip, sysname, unused_groups, unused_addresses): # generate report
+def pa_unused_report(ip, sysname, unused_groups, unused_addresses): # generate report
 
     # prepare a file to save report
     timestamp = datetime.now().strftime("%m%d_%H%M%S")

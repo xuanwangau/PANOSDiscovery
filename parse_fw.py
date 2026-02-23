@@ -24,10 +24,12 @@ def fw_used(ip, vsys, api_key):
             if group.get('static',{}):
                 members = pa_utils.ensure_list(group.get('static').get('member'))
                 
-            else: # must be dynamic group                 
-                dyn_grp_raw = pa_utils.get_dyn_group(ip, group.get('@name'), api_key)
+            else: # must be dynamic group
+                grp_name=group.get('@name')
+                dyn_grp_xpath=f"<show><object><dynamic-address-group><name>{grp_name}</name></dynamic-address-group></object></show>"    
+                dyn_grp_resp = pa_utils.op_request(ip,api_key,dyn_grp_xpath)                
                 
-                if dyn_grp_raw:
+                if dyn_grp_raw:= dyn_grp_resp.get('response').get('result',{}):
                     member_list = pa_utils.ensure_list(dyn_grp_raw.get('dyn-addr-grp').get('entry').get('member-list').get('entry'))
                     members = [item.get('@name') for item in member_list]                    
 

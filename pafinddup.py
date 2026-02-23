@@ -27,16 +27,11 @@ api_key = pa_utils.get_api_key(dev_ip,username,password)
 
 print(f"Retrieve system information...")
 
-sys_params = {
-    'type':"op",
-    'cmd': "<show><system><info></info></system></show>",
-    'key':api_key
-}
+sys_info_xpath = "<show><system><info></info></system></show>"
+sys_info_resp = pa_utils.op_request(dev_ip, api_key, sys_info_xpath)
 
-sys_info_raw = pa_utils.parse_request(dev_ip, sys_params)
-
-if sys_info_raw.get('response',{}).get('@status') == 'success':
-    sys_info = sys_info_raw.get('response').get('result').get('system')
+if sys_info_resp.get('response',{}).get('@status') == 'success':
+    sys_info = sys_info_resp.get('response').get('result').get('system')
 
 else:
     print("Error parsing system info.")
@@ -55,34 +50,20 @@ if sys_info.get('model').lower() == 'panorama':
     print(f"Analyzing Panorama configuration...")
 
     # get device group config from Panorama
-    dg_params = {
-        'type':'config',
-        'action':'get',
-        'xpath':pano_dg_xpath,
-        'key':api_key
-    }
 
-    dg_root_response = pa_utils.parse_request(dev_ip, dg_params)
-    dg_root_raw = dg_root_response.get('response',{}).get('result')
+    dg_root_response = pa_utils.conf_request(dev_ip, api_key, pano_dg_xpath) 
 
-    if dg_root_raw:
+    if dg_root_raw:=dg_root_response.get('response',{}).get('result'):
         dg_root = pa_utils.ensure_list(dg_root_raw.get('device-group').get('entry'))
     else:
         print(f"No device group found on {dev_ip}.")
         dg_root=[]
     
     # get shared object config from Panorama
-    shared_params = {
-        'type':'config',
-        'action':'get',
-        'xpath':pano_shared_xpath,
-        'key':api_key
-    }
 
-    shared_root_response = pa_utils.parse_request(dev_ip, shared_params)
-    shared_root_raw = shared_root_response.get('response',{}).get('result')
-
-    if shared_root_raw:
+    shared_root_response = pa_utils.conf_request(dev_ip, api_key, pano_shared_xpath)
+    
+    if shared_root_raw:=shared_root_response.get('response',{}).get('result'):
         shared_root = shared_root_raw.get('shared')
     else:
         print(f"No shared object found on {dev_ip}.")
@@ -116,17 +97,10 @@ if sys_info.get('model').lower() == 'panorama':
 
 else: # system is NGFW, get vsys config from firewall
     
-    vsys_params = {
-        'type':'config',
-        'action':'get',
-        'xpath':fw_vsys_xpath,
-        'key':api_key
-    }
+    vsys_root_resp = pa_utils.conf_request(dev_ip, api_key, fw_vsys_xpath)
 
-    vsys_root_raw = pa_utils.parse_request(dev_ip, vsys_params)
-
-    if vsys_root_raw.get('response').get('result'):
-        vsys_root = pa_utils.ensure_list(vsys_root_raw.get('response').get('result').get('vsys').get('entry'))
+    if vsys_root_raw:= vsys_root_resp.get('response').get('result'):
+        vsys_root = pa_utils.ensure_list(vsys_root_raw.get('vsys').get('entry'))
  
         for vsys_ins in vsys_root:
             vsys_name = vsys_ins.get('@name')

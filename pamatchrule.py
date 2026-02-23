@@ -31,16 +31,11 @@ while True:
     # get system info
     print(f"Retrieve system information...")
 
-    sys_params = {
-        'type':"op",
-        'cmd': "<show><system><info></info></system></show>",
-        'key':api_key
-    }
+    sys_info_xpath = "<show><system><info></info></system></show>"
+    sys_info_resp = pa_utils.op_request(dev_ip, api_key, sys_info_xpath)
 
-    sys_info_raw = pa_utils.parse_request(dev_ip, sys_params)
-
-    if sys_info_raw.get('response',{}).get('@status') == 'success':
-        sys_info = sys_info_raw.get('response').get('result').get('system')
+    if sys_info_resp.get('response',{}).get('@status') == 'success':
+        sys_info = sys_info_resp.get('response').get('result').get('system')
 
     else:
         print("Error parsing system info.")
@@ -54,14 +49,9 @@ while True:
     else:
         fw_ip, fw_key = dev_ip, api_key
 
-        mgd_params ={
-            'type':'config',
-            'action':'get',
-            'xpath':"/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/panorama",
-            'key':fw_key
-        }
+        mgd_xpath = "/config/devices/entry[@name='localhost.localdomain']/deviceconfig/system/panorama"
+        mgd_response = pa_utils.conf_request(fw_ip, fw_key, mgd_xpath)
 
-        mgd_response = pa_utils.parse_request(fw_ip, mgd_params)
         if mgd_raw := mgd_response.get('response').get('result',{}):
             if pano_ip := mgd_raw.get('panorama').get('local-panorama',{}).get('panorama-server'):
                 print(f"This firewall is managed by Panorama {pano_ip}.")
@@ -86,17 +76,10 @@ if not pano_ip: # standalone firewall
     # get vsys root
     print(f"Analyzing firewall configuration...")
 
-    vsys_params = {
-        'type':'config',
-        'action':'get',
-        'xpath':fw_vsys_xpath,
-        'key':fw_key
-    }
-
-    vsys_root_raw = pa_utils.parse_request(fw_ip, vsys_params)
-
-    if vsys_root_raw.get('response').get('result'):       
-        vsys_root = pa_utils.ensure_list(vsys_root_raw.get('response').get('result').get('vsys').get('entry'))
+    vsys_root_resp = pa_utils.conf_request(fw_ip, fw_key, fw_vsys_xpath)
+    
+    if vsys_root_raw:= vsys_root_resp.get('response').get('result'):       
+        vsys_root = pa_utils.ensure_list(vsys_root_raw.get('vsys').get('entry'))
 
         all_address, all_addr_grp, all_secrule = parse_fw.fw_map(vsys_root)
 
@@ -110,15 +93,7 @@ else: # fw managed by Panorama
     # use all active rules as reference to retrieve rule details from Panorama
 
 
-
 # call address to IP address function
 # for each rule, source and destination, if contains group, flatten group to address set
 # for each address in the set, check given ip address, if match collect the rule
 # report all collected rules
-
-for addr in all_address:
-    print(f"Address object: {addr}")
-for addr_grp in all_addr_grp:
-    print(f"Group: {addr_grp}")
-for rule in all_secrule:
-    print(f"Security rule: {rule}")
