@@ -61,26 +61,26 @@ def pano_used (ip, dg_root, shared_root, api_key):
     pre_or_post = ['pre-rulebase', 'post-rulebase']
     all_rulesec =[]
 
-    for base_tag in pre_or_post:
-        if shared_root.get(base_tag,{}):
-            all_rulesec = all_rulesec + pa_utils.gen_rule_pano(base_tag, 'security', shared_root)
-
+    for rulebase in pre_or_post:        
+        if sh_rulesec:= shared_root.get(rulebase,{}).get('security',{}).get('rules'):                   
+            all_rulesec = all_rulesec + pa_utils.ensure_list(sh_rulesec.get('entry'))
+    
     for dg in dg_root:
-        for base_tag in pre_or_post:
-            if dg.get(base_tag,{}):
-                all_rulesec = all_rulesec + pa_utils.gen_rule_pano(base_tag,'security', dg)
+        for rulebase in pre_or_post:                
+                if dg_rulesec:= dg.get(rulebase,{}).get('security',{}).get('rules'):                    
+                    all_rulesec = all_rulesec + pa_utils.ensure_list(dg_rulesec.get('entry'))
     
     # combine shared and dg nat rules
     all_rulenat =[]
 
-    for base_tag in pre_or_post:
-        if shared_root.get(base_tag,{}):
-            all_rulenat = all_rulenat + pa_utils.gen_rule_pano(base_tag, 'nat', shared_root)
+    for rulebase in pre_or_post:        
+        if sh_rulenat:= shared_root.get(rulebase,{}).get('nat',{}).get('rules'):                   
+            all_rulenat = all_rulenat + pa_utils.ensure_list(sh_rulenat.get('entry'))
     
     for dg in dg_root:
-        for base_tag in pre_or_post:
-            if dg.get(base_tag,{}):
-                all_rulenat = all_rulenat + pa_utils.gen_rule_pano(base_tag,'nat', dg)
+        for rulebase in pre_or_post:                
+                if dg_rulenat:= dg.get(rulebase,{}).get('nat',{}).get('rules'):                    
+                    all_rulenat = all_rulenat + pa_utils.ensure_list(dg_rulenat.get('entry'))
 
     # find used objects
 

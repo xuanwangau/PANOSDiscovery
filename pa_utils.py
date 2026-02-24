@@ -83,26 +83,6 @@ def gen_obj(type, root): # generate address/group set
     return all_obj, defined_obj_names
 
 
-def gen_rule_fw(type, root): # generate rule set on NGFW
-
-    if root.get('rulebase').get(type):
-        all_rule = ensure_list(root.get('rulebase').get(type).get('rules').get('entry'))        
-    else:
-        all_rule = []
-
-    return all_rule
-
-
-def gen_rule_pano(pre_or_post, type, root): # generate rule set on Panorama
-
-    if root.get(pre_or_post,{}).get(type,{}).get('rules'):
-        all_rule=ensure_list(root.get(pre_or_post).get(type).get('rules').get('entry'))        
-    else:
-        all_rule=[]
-        
-    return all_rule
-
-
 def expand_usage(obj_name, group_map, processed_groups, final_used_addresses): # expand groups to address recursively
 
     if obj_name in processed_groups:

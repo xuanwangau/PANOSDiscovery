@@ -36,16 +36,15 @@ def fw_used(ip, vsys, api_key):
             group_map[group['@name']] = members
         
     
-    # get security rules
+    # get security rules    
+    if vsys_secrule:=vsys.get('rulebase',{}).get('security',{}).get('rules'):
+            all_rulesec = pa_utils.ensure_list(vsys_secrule.get('entry'))
 
-    all_rulesec = pa_utils.gen_rule_fw('security', vsys)
-
-    # get NAT rules
-
-    all_rulenat = pa_utils.gen_rule_fw('nat', vsys)
+    # get NAT rules    
+    if vsys_natrule:=vsys.get('rulebase',{}).get('nat',{}).get('rules'):
+            all_rulenat = pa_utils.ensure_list(vsys_natrule.get('entry'))
 
     # find used objects
-
     print("Processing object usage...")
 
     used_references = set()
