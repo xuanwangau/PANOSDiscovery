@@ -67,30 +67,47 @@ while True:
         break
 
 # define xpath: pano shared, pano device group and fw vsys
-pano_shared_xpath = "/config/shared"
-pano_dg_xpath = "/config/devices/entry[@name='localhost.localdomain']/device-group"
-fw_vsys_xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys"
+pano_shared_xpath, pano_dg_xpath, fw_vsys_xpath = pa_utils.root_xpaths()
 
-if not pano_ip: # standalone firewall
+# get address map, group map, and rule map from firewall local config
+print(f"Analyzing firewall configuration...")
+
+vsys_root_resp = pa_utils.conf_request(fw_ip, fw_key, fw_vsys_xpath)
+
+if vsys_root_raw:= vsys_root_resp.get('response').get('result'):       
+    vsys_root = pa_utils.ensure_list(vsys_root_raw.get('vsys').get('entry'))
+
+    all_address, all_addr_grp, all_secrule = parse_fw.fw_map(vsys_root)
+
+else:
+    print(f"No vsys found on firewall {fw_ip}.")
+    sys.exit()
     
-    # get vsys root
-    print(f"Analyzing firewall configuration...")
-
-    vsys_root_resp = pa_utils.conf_request(fw_ip, fw_key, fw_vsys_xpath)
+if pano_ip: # firewall managed by Panorama
+    print("Analyzing Panorama configuration...")
     
-    if vsys_root_raw:= vsys_root_resp.get('response').get('result'):       
-        vsys_root = pa_utils.ensure_list(vsys_root_raw.get('vsys').get('entry'))
+    #get address map, group map, and fule rule map from Panorama
+    shared_root_resp = pa_utils.conf_request(pano_ip, pano_key, pano_shared_xpath)
 
-        all_address, all_addr_grp, all_secrule = parse_fw.fw_map(vsys_root)
-
-    else:
-        print(f"No vsys found on firewall {fw_ip}.")
-        sys.exit()
+    if shared_root_raw:=shared_root_resp.get('response').get('result'):
+        shared_root = shared_root_raw.get('shared')
     
-else: # fw managed by Panorama
-    print(f"panorama ip: {pano_ip}")
-    # from fw rule hit api, get all active rules
-    # use all active rules as reference to retrieve rule details from Panorama
+    dg_root_resp = pa_utils.conf_request(pano_ip, pano_key, pano_dg_xpath)
+
+    if dg_root_raw:= dg_root_resp.get('response').get('result'):
+        dg_root = pa_utils.ensure_list(dg_root_raw.get('device-group').get('entry'))
+
+    pano_address, pano_addr_grp, pano_secrule = parse_pano.pano_map(shared_root, dg_root)
+
+    all_address = all_address + pano_address
+    all_addr_grp = all_addr_grp + pano_addr_grp
+    all_secrule = all_secrule + pano_secrule
+
+
+print(len(all_secrule))
+    
+# from fw rule hit api, get all active rules
+# use all active rules as reference to retrieve rule details from Panorama
 
 
 # call address to IP address function

@@ -57,6 +57,12 @@ def op_request(ip, key, xpath):
     parsed = xmltodict.parse(response.text)
     return parsed
 
+def root_xpaths():
+    pano_shared_xpath = "/config/shared"
+    pano_dg_xpath = "/config/devices/entry[@name='localhost.localdomain']/device-group"
+    fw_vsys_xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys"
+
+    return pano_shared_xpath, pano_dg_xpath, fw_vsys_xpath
 
 def ensure_list(data): # ensure data is list type
     if data is None:
@@ -89,7 +95,7 @@ def gen_rule_fw(type, root): # generate rule set on NGFW
 
 def gen_rule_pano(pre_or_post, type, root): # generate rule set on Panorama
 
-    if root.get(pre_or_post).get(type,{}).get('rules'):
+    if root.get(pre_or_post,{}).get(type,{}).get('rules'):
         all_rule=ensure_list(root.get(pre_or_post).get(type).get('rules').get('entry'))        
     else:
         all_rule=[]

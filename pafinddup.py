@@ -41,9 +41,8 @@ else:
 # process address objects based on system model
 
 # define xpath: pano shared, pano device group and fw vsys
-pano_shared_xpath = "/config/shared"
-pano_dg_xpath = "/config/devices/entry[@name='localhost.localdomain']/device-group"
-fw_vsys_xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys"
+
+pano_shared_xpath, pano_dg_xpath, fw_vsys_xpath = pa_utils.root_xpaths()
 
 if sys_info.get('model').lower() == 'panorama':
 

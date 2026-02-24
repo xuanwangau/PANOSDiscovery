@@ -115,3 +115,36 @@ def pano_used (ip, dg_root, shared_root, api_key):
 
     return defined_addr_names, defined_group_names, all_group_map, used_references
 
+def pano_map(shared_root, dg_root):
+
+    # update map from shared config
+    all_address = pa_utils.ensure_list(shared_root.get('address',{}).get('entry'))
+    all_addr_grp = pa_utils.ensure_list(shared_root.get('address-group',{}).get('entry'))
+    all_secrule = []
+    pre_or_post=['pre-rulebase', 'post-rulebase']
+
+    for rulebase in pre_or_post:
+        if sh_secrules:= shared_root.get(rulebase).get('security',{}).get('rules'):
+            sh_secrules_list = pa_utils.ensure_list(sh_secrules.get('entry'))
+            for rule in sh_secrules_list:
+                rule['rule-location'] = 'shared'
+            all_secrule = all_secrule + sh_secrules_list
+
+    # update map from all dg config
+    for dg in dg_root:
+        dg_name = dg.get('@name')
+
+        if dg.get('devices'):
+            if dg_address := dg.get('address'):
+                all_address = all_address + pa_utils.ensure_list(dg_address.get('entry'))
+            if dg_addr_grp:= dg.get('address-group'):
+                all_addr_grp = all_addr_grp + pa_utils.ensure_list(dg_addr_grp.get('entry'))
+            
+            for rulebase in pre_or_post:                
+                if dg_secrules:= dg.get(rulebase,{}).get('security',{}).get('rules'):
+                    dg_secrules_list = pa_utils.ensure_list(dg_secrules.get('entry'))
+                    for rule in dg_secrules_list:
+                        rule['rule-location'] = f"{dg_name}"
+                    all_secrule = all_secrule + dg_secrules_list
+
+    return all_address, all_addr_grp, all_secrule

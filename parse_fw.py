@@ -86,22 +86,18 @@ def fw_map (vsys_root):
     for vsys in vsys_root:
         vsys_name = vsys.get('@name')
         
-        if vsys.get('address',{}):
-            vsys_address = pa_utils.ensure_list(vsys.get('address').get('entry'))
-            all_address = all_address + vsys_address
-        else:
-            print(f"No address object defind on firewall vsys {vsys_name}.")
+        if vsys_address:= vsys.get('address',{}).get('entry'):            
+            all_address = all_address + pa_utils.ensure_list(vsys_address)        
 
         # build address group map
-        if vsys.get('address-group',{}):
-            vsys_addr_grp = pa_utils.ensure_list(vsys.get('address-group').get('entry'))
-            all_addr_grp = all_addr_grp + vsys_addr_grp
-        else:
-            print(f"No address group defined on firewall vsys {vsys_name}.")
+        if vsys_addr_grp:=vsys.get('address-group',{}).get('entry'):            
+            all_addr_grp = all_addr_grp + pa_utils.ensure_list(vsys_addr_grp)        
 
         #build security rule map
-        if vsys.get('rulebase',{}).get('security',{}).get('rules'):
-            vsys_secrule = pa_utils.ensure_list(vsys.get('rulebase',{}).get('security',{}).get('rules',{}).get('entry'))
-            all_secrule = all_secrule + vsys_secrule
+        if vsys_secrule:=vsys.get('rulebase',{}).get('security',{}).get('rules'):
+            vsys_secrule_list = pa_utils.ensure_list(vsys_secrule.get('entry'))
+            for rule in vsys_secrule_list:
+                rule['rule-location']=vsys_name
+            all_secrule = all_secrule + vsys_secrule_list
 
     return all_address, all_addr_grp, all_secrule
