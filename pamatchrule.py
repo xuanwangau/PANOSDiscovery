@@ -24,8 +24,7 @@ username = input("Enter username: ")
 password = getpass.getpass("Enter password: ")
 
 while True:
-
-    print("Generating API key...")
+    
     api_key = pa_utils.get_api_key(dev_ip,username,password)
 
     # get system info
@@ -53,12 +52,12 @@ while True:
         mgd_response = pa_utils.conf_request(fw_ip, fw_key, mgd_xpath)
 
         if mgd_raw := mgd_response.get('response').get('result',{}):
-            if pano_ip := mgd_raw.get('panorama').get('local-panorama',{}).get('panorama-server'):
+            if pano_ins := mgd_raw.get('panorama').get('local-panorama'):
+                pano_ip = pano_ins.get('panorama-server')
                 print(f"This firewall is managed by Panorama {pano_ip}.")
                 pano_un = input ("Enter Panorama username:")
                 pano_pw = getpass.getpass("Enter password:")
-
-                print(f"Generating API key of Panorama {pano_ip} ...")
+                
                 pano_key = pa_utils.get_api_key(pano_ip,pano_un,pano_pw)
             else:
                 pano_ip='' # Panorama not available or cloud
@@ -84,8 +83,10 @@ else:
     sys.exit()
     
 if pano_ip: # firewall managed by Panorama
+    serial=sys_info.get('serial')
+
     print("Analyzing Panorama configuration...")
-    
+
     #get address map, group map, and fule rule map from Panorama
     shared_root_resp = pa_utils.conf_request(pano_ip, pano_key, pano_shared_xpath)
 
@@ -97,14 +98,14 @@ if pano_ip: # firewall managed by Panorama
     if dg_root_raw:= dg_root_resp.get('response').get('result'):
         dg_root = pa_utils.ensure_list(dg_root_raw.get('device-group').get('entry'))
 
-    pano_address, pano_addr_grp, pano_secrule = parse_pano.pano_map(shared_root, dg_root)
+    pano_address, pano_addr_grp, pano_secrule = parse_pano.pano_map(shared_root, dg_root, serial)
 
     all_address = all_address + pano_address
     all_addr_grp = all_addr_grp + pano_addr_grp
     all_secrule = all_secrule + pano_secrule
 
 
-print(len(all_secrule))
+print(len(all_address))
     
 # from fw rule hit api, get all active rules
 # use all active rules as reference to retrieve rule details from Panorama

@@ -89,14 +89,13 @@ def fw_map (vsys_root):
             all_address = all_address + pa_utils.ensure_list(vsys_address)        
 
         # build address group map
-        if vsys_addr_grp:=vsys.get('address-group',{}).get('entry'):            
-            all_addr_grp = all_addr_grp + pa_utils.ensure_list(vsys_addr_grp)        
+        if vsys_addr_grp:=vsys.get('address-group'):            
+            all_addr_grp = all_addr_grp + pa_utils.ensure_list(vsys_addr_grp.get('entry'))        
 
         #build security rule map
         if vsys_secrule:=vsys.get('rulebase',{}).get('security',{}).get('rules'):
             vsys_secrule_list = pa_utils.ensure_list(vsys_secrule.get('entry'))
-            for rule in vsys_secrule_list:
-                rule['rule-location']=vsys_name
+            
             all_secrule = all_secrule + vsys_secrule_list
 
     return all_address, all_addr_grp, all_secrule
