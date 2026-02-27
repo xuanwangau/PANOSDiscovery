@@ -72,17 +72,6 @@ def ensure_list(data): # ensure data is list type
     return [data]
 
 
-def gen_obj(type, root): # generate address/group set
-
-    if root.get(type,{}):
-        all_obj = ensure_list(root.get(type).get('entry'))
-        defined_obj_names = {item['@name'] for item in all_obj} # Set of all address/group names        
-    else:
-        all_obj = []
-        defined_obj_names = set()        
-    return all_obj, defined_obj_names
-
-
 def expand_usage(obj_name, group_map, processed_groups, final_used_addresses): # expand groups to address recursively
 
     if obj_name in processed_groups:
@@ -173,7 +162,7 @@ def pa_dup_report(ip, sysname, map):
     print(f"Report saved in {output_file}")
         
 
-def fqdn_cache_to_map(fqdn_text):
+def fqdn_to_ip(fqdn_text):
     # 1. Split the text into blocks by looking for the domain names
     # This assumes domains start at the beginning of a line
     blocks = re.split(r'\n(?=[a-zA-Z0-9])', fqdn_text.strip())

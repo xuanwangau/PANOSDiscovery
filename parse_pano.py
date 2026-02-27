@@ -5,10 +5,19 @@
 # modules
 import pa_utils
 
-def parse_section_obj (ip, section_root, api_key):
- 
-    section_addrs, section_addr_names = pa_utils.gen_obj('address', section_root)
-    section_groups, section_group_names = pa_utils.gen_obj('address-group', section_root)
+def parse_section_obj (ip, section_root, api_key):    
+
+    section_addrs=[]
+    section_addr_names=set()
+    if section_root.get('address',{}):
+        section_addrs = section_addrs + pa_utils.ensure_list(section_root.get('address').get('entry'))
+        section_addr_names = { item.get('@name') for item in section_addrs}
+        
+    section_groups=[]
+    section_group_names=set()
+    if section_root.get('address-group',{}):
+        section_groups = section_groups + pa_utils.ensure_list(section_root.get('address-group').get('entry'))
+        section_group_names = { item.get('@name') for item in section_groups}
 
     # structure group map: {'group_name':['member 1', 'member 2']}
     section_group_map={}

@@ -10,11 +10,20 @@ def fw_used(ip, vsys, api_key):
     # vsys is a dictionary looks like 
     # {'@name': vsys_name, 'rulebase':{'security':{'rules':{'entry':[]}}}, 'address':{'entry':[]}, ...}
 
-    # get all address objects
-    all_addrs, defined_addr_names = pa_utils.gen_obj('address', vsys)
-    
-    # get all address groups
-    all_groups, defined_group_names = pa_utils.gen_obj('address-group', vsys)
+    # get all address objects 
+
+    all_addrs =[]
+    defined_addr_names = set()   
+    if vsys.get('address',{}):
+        all_addrs = pa_utils.ensure_list(vsys.get('address').get('entry'))
+        defined_addr_names = { item.get('@name') for item in all_addrs}
+
+    # get all address groups    
+    all_groups=[]
+    defined_group_names=set()
+    if vsys.get('address-group',{}):
+        all_groups = pa_utils.ensure_list(vsys.get('address-group').get('entry'))
+        defined_group_names = { item.get('@name') for item in all_groups}
 
     # structure group map: {'group_name':['member 1', 'member 2']}
     group_map={}

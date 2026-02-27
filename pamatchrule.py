@@ -105,13 +105,12 @@ if pano_ip: # firewall managed by Panorama
     all_secrule = all_secrule + pano_secrule
 
 
-print(len(all_address))
-    
-# from fw rule hit api, get all active rules
-# use all active rules as reference to retrieve rule details from Panorama
+src_ip = input("Source IP:")
+dst_ip = input("Destination IP:")
 
 
-# call address to IP address function
+
+# call address to IPSet function, fqdn cache to map function, ip_wildcard match function
 # for each rule, source and destination, if contains group, flatten group to address set
 # for each address in the set, check given ip address, if match collect the rule
 # report all collected rules

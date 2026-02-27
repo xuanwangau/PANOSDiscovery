@@ -73,13 +73,18 @@ if sys_info.get('model').lower() == 'panorama':
     if dg_root and shared_root:
         reverse_addr_map = {}
 
-        shared_address, shared_addr_names = pa_utils.gen_obj('address', shared_root)
-        for obj in shared_address:
+        if shared_root.get('address',{}):
+            shared_addrs = pa_utils.ensure_list(shared_root.get('address').get('entry'))
+            
+        for obj in shared_addrs:
             pa_utils.update_reverse_map(reverse_addr_map, obj)
             
-        for dg in dg_root:
-            dg_address, dg_addr_names = pa_utils.gen_obj('address', dg)
-            for obj in dg_address:
+        for dg in dg_root:     
+
+            if dg.get('address',{}):
+                dg_addrs = pa_utils.ensure_list(dg.get('address').get('entry'))
+
+            for obj in dg_addrs:
                 pa_utils.update_reverse_map(reverse_addr_map, obj)
 
         dup_addr_map ={}
@@ -107,9 +112,10 @@ else: # system is NGFW, get vsys config from firewall
 
             reverse_addr_map = {}
 
-            vsys_address, vsys_addr_names = pa_utils.gen_obj('address', vsys_ins)
+            if vsys_ins.get('address',{}):
+                vsys_addrs = pa_utils.ensure_list(vsys_ins.get('address').get('entry'))                
 
-            for obj in vsys_address:
+            for obj in vsys_addrs:
                 pa_utils.update_reverse_map(reverse_addr_map, obj)
 
             dup_addr_map ={}
