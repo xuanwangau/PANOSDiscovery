@@ -11,6 +11,7 @@ import sys
 import pa_utils
 import parse_fw
 import parse_pano
+import pa_ipformat
 
 # disable ssl cert warning
 
@@ -104,13 +105,100 @@ if pano_ip: # firewall managed by Panorama
     all_addr_grp = all_addr_grp + pano_addr_grp
     all_secrule = all_secrule + pano_secrule
 
+# creat fqdn map
+fqdn_xpath = '<show><dns-proxy><fqdn><all></all></fqdn></dns-proxy></show>'
+fqdn_resp = pa_utils.op_request(fw_ip, fw_key, fqdn_xpath)
+fqdn_map = pa_utils.fqdn_map(fqdn_resp.get('response').get('result',''))
 
-src_ip = input("Source IP:")
-dst_ip = input("Destination IP:")
+for name, ips in fqdn_map.items():
+    fqdn_map[name] = [ pa_ipformat.convert_to_ipset(ip) for ip in ips]
 
+# format all_address map, exclude 'ip-wildcard' which will be treated seperately
+address_map={}
 
+for address in all_address:
+    if address_string:= address.get('ip-netmask',{}):
+        address['ipset'] = pa_utils.ensure_list(pa_ipformat.convert_to_ipset(address_string))        
+    elif address_string:= address.get('ip-range',{}):
+        address['ipset'] = pa_utils.ensure_list(pa_ipformat.convert_to_ipset(address_string))        
+    elif address_string:= address.get('fqdn',{}):
+        address['ipset'] = fqdn_map.get(address_string)
+    
+    address_map[address.get('@name')] = address
 
-# call address to IPSet function, fqdn cache to map function, ip_wildcard match function
-# for each rule, source and destination, if contains group, flatten group to address set
-# for each address in the set, check given ip address, if match collect the rule
-# report all collected rules
+# create group to address map
+group_map = {}
+if all_addr_grp:
+    group_map = pa_utils.group_address_mapping(fw_ip,fw_key,all_addr_grp)
+
+# format rule map
+# for each rule in secrule: get source and destination member and flatten member set
+
+for rule in all_secrule:
+    src_or_dst = ['source', 'destination']
+    for sd in src_or_dst:        
+        sd_members = pa_utils.ensure_list(rule.get(sd).get('member'))
+        processed_groups = set()
+        member_addrs= set()
+
+        if 'any' in sd_members:
+            member_addrs.add('any')
+        else:
+            for addr in sd_members:
+                if addr in address_map or addr in group_map:
+                    pa_utils.expand_usage(addr, group_map, processed_groups, member_addrs)
+                else: # TBC: match EDL, match direct input address in rule
+                    member_addrs.add('any')            
+                # else: # bug fix for '@dirtyId' in api response when configd is hung
+                #     name = addr.get('#text','')
+                #     pa_utils.expand_usage(name, group_map, processed_groups, member_addrs)
+
+        rule[f"{sd}-address-set"] = member_addrs
+
+# rule matching
+
+src_ip = input("Enter source ip address:")
+dst_ip = input("Enter destination ip address:")
+
+matching_rule = [] # matching rule collection
+
+for rule in all_secrule:    
+    src_match = False
+    dst_match = False
+
+    for addr in rule.get('source-address-set'):
+        if addr == 'any':
+            src_match = True             
+        elif addr in address_map:
+            if ipset:=address_map.get(addr).get('ipset',{}):
+                for ip in ipset:
+                    if src_ip in ip:
+                        src_match = True
+            elif addr_str := address_map.get(addr).get('ip-wildcard'):
+                src_match = pa_ipformat.ip_matches_wildcard(src_ip, addr_str)
+        else: #catches directly configured ip/mask in rule
+            ip = pa_ipformat.convert_to_ipset(addr)
+            if src_ip in ip:
+                src_match = True
+
+    for addr in rule.get('destination-address-set'):
+        if addr == 'any':
+            dst_match = True
+        elif addr in address_map:
+            if ipset:=address_map.get(addr).get('ipset',{}):
+                for ip in ipset:
+                    if dst_ip in ip:
+                        dst_match = True
+            elif addr_str := address_map.get(addr).get('ip-wildcard'):
+                dst_match = pa_ipformat.ip_matches_wildcard(dst_ip, addr_str)
+        else: #catches directly configured ip/mask in rule
+            print(addr)
+            ip = pa_ipformat.convert_to_ipset(addr)
+            if dst_ip in ip:
+                dst_match = True
+
+    if src_match and dst_match:
+        matching_rule.append(rule.get('@name'))
+
+for name in matching_rule:
+    print(f"Possible matching rule: {name}")

@@ -86,6 +86,26 @@ def expand_usage(obj_name, group_map, processed_groups, final_used_addresses): #
         final_used_addresses.add(obj_name)
 
 
+def group_address_mapping(ip, key, group_dict): # from group_dictionary create group to address map
+    group_map = {}
+    for group in group_dict:
+        if group.get('static',{}):
+            members = ensure_list(group.get('static').get('member'))
+            
+        else: # must be dynamic group
+            grp_name=group.get('@name')
+            dyn_grp_xpath=f"<show><object><dynamic-address-group><name>{grp_name}</name></dynamic-address-group></object></show>"    
+            dyn_grp_resp = op_request(ip,key,dyn_grp_xpath)                
+            
+            if dyn_grp_raw:= dyn_grp_resp.get('response').get('result',{}):
+                member_list = ensure_list(dyn_grp_raw.get('dyn-addr-grp').get('entry').get('member-list').get('entry'))
+                members = [item.get('@name') for item in member_list]                    
+
+        group_map[group['@name']] = members
+
+    return group_map
+
+
 def pa_unused_report(ip, sysname, unused_groups, unused_addresses): # generate report
 
     # prepare a file to save report
@@ -162,9 +182,8 @@ def pa_dup_report(ip, sysname, map):
     print(f"Report saved in {output_file}")
         
 
-def fqdn_to_ip(fqdn_text):
-    # 1. Split the text into blocks by looking for the domain names
-    # This assumes domains start at the beginning of a line
+def fqdn_map(fqdn_text):
+    # Split the text into blocks by looking for the domain names    
     blocks = re.split(r'\n(?=[a-zA-Z0-9])', fqdn_text.strip())
 
     data_map = {}
@@ -173,7 +192,7 @@ def fqdn_to_ip(fqdn_text):
         lines = block.strip().split('\n')
         domain = lines[0].strip()
         
-        # 2. Extract only IPv4 addresses from the rest of the block
+        # Extract only IPv4 addresses from the rest of the block
         # Logic: \b boundaries and 4 sets of 1-3 digits
         ipv4_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
         ips = re.findall(ipv4_pattern, block)

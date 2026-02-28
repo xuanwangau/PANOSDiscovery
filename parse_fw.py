@@ -29,21 +29,7 @@ def fw_used(ip, vsys, api_key):
     group_map={}
     
     if all_groups:    
-        for group in all_groups:        
-            if group.get('static',{}):
-                members = pa_utils.ensure_list(group.get('static').get('member'))
-                
-            else: # must be dynamic group
-                grp_name=group.get('@name')
-                dyn_grp_xpath=f"<show><object><dynamic-address-group><name>{grp_name}</name></dynamic-address-group></object></show>"    
-                dyn_grp_resp = pa_utils.op_request(ip,api_key,dyn_grp_xpath)                
-                
-                if dyn_grp_raw:= dyn_grp_resp.get('response').get('result',{}):
-                    member_list = pa_utils.ensure_list(dyn_grp_raw.get('dyn-addr-grp').get('entry').get('member-list').get('entry'))
-                    members = [item.get('@name') for item in member_list]                    
-
-            group_map[group['@name']] = members
-        
+        group_map = pa_utils.group_address_mapping(ip, api_key, all_groups)
     
     # get security rules    
     if vsys_secrule:=vsys.get('rulebase',{}).get('security',{}).get('rules'):

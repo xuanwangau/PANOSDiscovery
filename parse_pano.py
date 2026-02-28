@@ -10,33 +10,20 @@ def parse_section_obj (ip, section_root, api_key):
     section_addrs=[]
     section_addr_names=set()
     if section_root.get('address',{}):
-        section_addrs = section_addrs + pa_utils.ensure_list(section_root.get('address').get('entry'))
+        section_addrs = pa_utils.ensure_list(section_root.get('address').get('entry'))
         section_addr_names = { item.get('@name') for item in section_addrs}
-        
+
     section_groups=[]
     section_group_names=set()
     if section_root.get('address-group',{}):
-        section_groups = section_groups + pa_utils.ensure_list(section_root.get('address-group').get('entry'))
+        section_groups = pa_utils.ensure_list(section_root.get('address-group').get('entry'))
         section_group_names = { item.get('@name') for item in section_groups}
 
     # structure group map: {'group_name':['member 1', 'member 2']}
     section_group_map={}
 
     if section_groups:
-        for group in section_groups:
-            if group.get('static',{}):
-                members = pa_utils.ensure_list(group.get('static').get('member'))
-                
-            else: # must be dynamic group
-                grp_name=group.get('@name')
-                dyn_grp_xpath=f"<show><object><dynamic-address-group><name>{grp_name}</name></dynamic-address-group></object></show>"    
-                dyn_grp_resp = pa_utils.op_request(ip,api_key,dyn_grp_xpath) 
-                
-                if dyn_grp_raw:= dyn_grp_resp.get('response').get('result',{}):
-                    member_list = pa_utils.ensure_list(dyn_grp_raw.get('dyn-addr-grp').get('entry').get('member-list').get('entry'))
-                    members = [item.get('@name') for item in member_list]                    
-
-            section_group_map[group['@name']] = members
+        section_group_map = pa_utils.group_address_mapping(ip, api_key, section_groups)
 
     return section_addr_names, section_group_names, section_group_map
 
