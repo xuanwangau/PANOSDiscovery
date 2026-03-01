@@ -7,6 +7,8 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import pa_ipformat
+
 
 def get_api_key(ip, user, pw): # generate API key
 
@@ -201,3 +203,20 @@ def fqdn_map(fqdn_text):
 
     return data_map
 
+def rule_address_match(addr, addr_map, test_ip):
+    if addr == 'any':
+        return True            
+    elif addr in addr_map:
+        if ipset:=addr_map.get(addr).get('ipset',{}):
+            for ip in ipset:
+                if test_ip in ip:
+                    return True
+        elif addr_str:= addr_map.get(addr).get('ip-wildcard',{}):
+            return pa_ipformat.ip_matches_wildcard(test_ip, addr_str)
+    else: #catches directly configured ip/mask in rule    
+        try:
+            ip = pa_ipformat.convert_to_ipset(addr)
+            if test_ip in ip:
+                return True
+        except Exception: #exclude Region and EDL
+            return False

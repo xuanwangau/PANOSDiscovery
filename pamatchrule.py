@@ -122,7 +122,7 @@ for address in all_address:
     elif address_string:= address.get('ip-range',{}):
         address['ipset'] = pa_utils.ensure_list(pa_ipformat.convert_to_ipset(address_string))        
     elif address_string:= address.get('fqdn',{}):
-        address['ipset'] = fqdn_map.get(address_string)
+        address['ipset'] = fqdn_map.get(address_string,[])
     
     address_map[address.get('@name')] = address
 
@@ -156,9 +156,19 @@ for rule in all_secrule:
         rule[f"{sd}-address-set"] = member_addrs
 
 # rule matching
+while True:
+    src_ip = input("Enter source ip address:")
+    if pa_ipformat.is_valid_ip(src_ip):
+        break
+    else:
+        print('Invalid IP address')
 
-src_ip = input("Enter source ip address:")
-dst_ip = input("Enter destination ip address:")
+while True:   
+    dst_ip = input("Enter destination ip address:")
+    if pa_ipformat.is_valid_ip(dst_ip):
+        break
+    else:
+        print('Invalid IP address')
 
 matching_rule = [] # matching rule collection
 
@@ -167,35 +177,14 @@ for rule in all_secrule:
     dst_match = False
 
     for addr in rule.get('source-address-set'):
-        if addr == 'any':
-            src_match = True             
-        elif addr in address_map:
-            if ipset:=address_map.get(addr).get('ipset',{}):
-                for ip in ipset:
-                    if src_ip in ip:
-                        src_match = True
-            elif addr_str := address_map.get(addr).get('ip-wildcard'):
-                src_match = pa_ipformat.ip_matches_wildcard(src_ip, addr_str)
-        else: #catches directly configured ip/mask in rule
-            ip = pa_ipformat.convert_to_ipset(addr)
-            if src_ip in ip:
-                src_match = True
+        src_match = pa_utils.rule_address_match(addr, address_map, src_ip)
+        if src_match:
+            break
 
     for addr in rule.get('destination-address-set'):
-        if addr == 'any':
-            dst_match = True
-        elif addr in address_map:
-            if ipset:=address_map.get(addr).get('ipset',{}):
-                for ip in ipset:
-                    if dst_ip in ip:
-                        dst_match = True
-            elif addr_str := address_map.get(addr).get('ip-wildcard'):
-                dst_match = pa_ipformat.ip_matches_wildcard(dst_ip, addr_str)
-        else: #catches directly configured ip/mask in rule
-            print(addr)
-            ip = pa_ipformat.convert_to_ipset(addr)
-            if dst_ip in ip:
-                dst_match = True
+        dst_match = pa_utils.rule_address_match(addr, address_map, dst_ip)
+        if dst_match:
+            break
 
     if src_match and dst_match:
         matching_rule.append(rule.get('@name'))

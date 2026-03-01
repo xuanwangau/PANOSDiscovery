@@ -26,3 +26,9 @@ def ip_matches_wildcard(test_ip_str, address_str):
     # ~mask flips 1s (ignore) to 0s (check)
     return (test_ip.value & ~mask.value) == (base.value & ~mask.value)
 
+def is_valid_ip(ip_string):
+    try:
+        IPAddress(ip_string)
+        return True
+    except:
+        return False
