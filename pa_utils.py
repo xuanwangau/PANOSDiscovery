@@ -220,3 +220,20 @@ def rule_address_match(addr, addr_map, test_ip):
                 return True
         except Exception: #exclude Region and EDL
             return False
+        
+
+def set_config(ip, key, xpath, element):
+
+    url = fr"https://{ip}/api/"
+    params ={
+        'type':'config',
+        'action': 'set',
+        'xpath': xpath,
+        'key': key,
+        'element':element
+    }
+
+    response = requests.get(url, params=params, verify=False)
+    response.raise_for_status()
+    parsed = xmltodict.parse(response.text)
+    return parsed
